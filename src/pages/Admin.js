@@ -375,8 +375,7 @@ function GlimpseForm({ initial, onSave, onClose }) {
     title: initial?.title || "",
     speaker: initial?.speaker || "",
     description: initial?.description || "",
-    videoUrl: initial?.videoUrl || "",
-    thumbnailUrl: initial?.thumbnailUrl || "",
+    imageUrl: initial?.imageUrl || "",
     date: initial?.date || "",
     tag: initial?.tag || "",
   });
@@ -384,7 +383,7 @@ function GlimpseForm({ initial, onSave, onClose }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.title || !form.videoUrl) { toast.error("Title and Video URL are required"); return; }
+    if (!form.title) { toast.error("Title is required"); return; }
     onSave(form);
   };
 
@@ -394,16 +393,12 @@ function GlimpseForm({ initial, onSave, onClose }) {
         <button className="modal-close" onClick={onClose}>✕</button>
         <h2>{initial ? "Edit Glimpse" : "Add Webinar Glimpse"}</h2>
         <form onSubmit={handleSubmit}>
-          <div className="form-group"><label>Title *</label><input value={form.title} onChange={set("title")} placeholder="Webinar title" /></div>
-          <div className="form-group"><label>Speaker</label><input value={form.speaker} onChange={set("speaker")} placeholder="Speaker name" /></div>
+          <div className="form-group"><label>Title *</label><input value={form.title} onChange={set("title")} placeholder="e.g. Leadership Workshop 2025" /></div>
+          <div className="form-group"><label>Speaker / Host</label><input value={form.speaker} onChange={set("speaker")} placeholder="Speaker name" /></div>
           <div className="form-group">
-            <label>Google Drive Video URL *</label>
-            <input value={form.videoUrl} onChange={set("videoUrl")} placeholder="https://drive.google.com/file/d/..." />
-            <p className="form-hint">Paste the Google Drive share link of the recording</p>
-          </div>
-          <div className="form-group">
-            <label>Custom Thumbnail URL</label>
-            <input value={form.thumbnailUrl} onChange={set("thumbnailUrl")} placeholder="Optional custom thumbnail" />
+            <label>Google Drive Image URL</label>
+            <input value={form.imageUrl} onChange={set("imageUrl")} placeholder="https://drive.google.com/file/d/..." />
+            <p className="form-hint">Upload a photo/screenshot to Google Drive → Share → "Anyone with link" → paste the link here</p>
           </div>
           <div className="form-row">
             <div className="form-group"><label>Date</label><input value={form.date} onChange={set("date")} type="date" /></div>
