@@ -2,15 +2,13 @@ import React, { useState } from "react";
 
 /**
  * SmartThumbnail
- * - If a custom thumbnail URL is provided (manually uploaded image in Drive), try it.
- * - For video Drive links, we do NOT auto-generate thumbnails because Drive returns
- *   a screenshot of the video player UI — not a clean image.
- * - Falls back to a styled placeholder icon.
+ * Only loads an image if a custom thumbnail URL was explicitly provided by the admin.
+ * For video Drive links we never attempt auto-thumbnails (Drive returns player screenshots).
+ * Shows a clean branded placeholder with play icon otherwise.
  */
-export default function SmartThumbnail({ videoUrl, customThumbUrl, alt, placeholder }) {
+export default function SmartThumbnail({ customThumbUrl, alt, placeholder, showPlayIcon = false }) {
   const [failed, setFailed] = useState(false);
 
-  // Only attempt to load if there's an explicit custom thumbnail URL
   if (customThumbUrl && !failed) {
     return (
       <img
@@ -22,12 +20,14 @@ export default function SmartThumbnail({ videoUrl, customThumbUrl, alt, placehol
     );
   }
 
-  // No custom thumb or it failed — show placeholder
-  return placeholder || (
+  if (placeholder) return placeholder;
+
+  // Default branded placeholder
+  return (
     <div className="thumb-placeholder">
-      <svg width="48" height="48" fill="none" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="1.5" opacity="0.4"/>
-        <path d="M10 8l6 4-6 4V8z" fill="white" opacity="0.6"/>
+      <svg width="52" height="52" fill="none" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="11" stroke="rgba(255,255,255,0.3)" strokeWidth="1"/>
+        <path d="M10 8l6 4-6 4V8z" fill="rgba(255,255,255,0.7)"/>
       </svg>
     </div>
   );
