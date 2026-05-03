@@ -57,7 +57,6 @@ export default function Glimpses() {
         )}
       </div>
 
-      {/* Image lightbox modal */}
       {selected && (
         <div className="modal-backdrop" onClick={() => setSelected(null)}>
           <div className="glimpse-modal" onClick={(e) => e.stopPropagation()}>
@@ -68,13 +67,10 @@ export default function Glimpses() {
               </div>
               <button className="modal-close" onClick={() => setSelected(null)}>✕</button>
             </div>
-
             <div className="glimpse-modal-img">
               <GlimpseImage imageUrl={selected.imageUrl} alt={selected.title} />
             </div>
-
             {selected.description && <p className="video-desc">{selected.description}</p>}
-
             <div className="glimpse-modal-actions">
               {selected.imageUrl && (
                 <a href={getDriveViewUrl(selected.imageUrl)} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">
@@ -89,6 +85,7 @@ export default function Glimpses() {
   );
 }
 
+/* Loads a Drive image — plain img tag, no canvas */
 function GlimpseImage({ imageUrl, alt }) {
   const [failed, setFailed] = useState(false);
   const thumbUrl = getDriveThumbnailUrl(imageUrl);
@@ -123,9 +120,9 @@ function GlimpseCard({ glimpse, index, onClick }) {
   return (
     <div className="glimpse-card fade-up" style={{ animationDelay: `${index * 0.06}s` }} onClick={onClick}>
       <div className="glimpse-img-wrap">
-        {thumbUrl && !imgFailed ? (
+        {glimpse.imageUrl && !imgFailed ? (
           <img
-            src={thumbUrl}
+            src={thumbUrl || glimpse.imageUrl}
             alt={glimpse.title}
             className="glimpse-thumb-img"
             onError={() => setImgFailed(true)}
@@ -133,15 +130,13 @@ function GlimpseCard({ glimpse, index, onClick }) {
         ) : (
           <div className="glimpse-img-placeholder">
             <svg width="40" height="40" fill="none" viewBox="0 0 24 24">
-              <rect x="3" y="3" width="18" height="18" rx="2" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5"/>
-              <circle cx="8.5" cy="8.5" r="1.5" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5"/>
-              <path d="M21 15l-5-5L5 21" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <rect x="3" y="3" width="18" height="18" rx="2" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5"/>
+              <circle cx="8.5" cy="8.5" r="1.5" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5"/>
+              <path d="M21 15l-5-5L5 21" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
         )}
-        <div className="glimpse-hover-overlay">
-          <span>View</span>
-        </div>
+        <div className="glimpse-hover-overlay"><span>View</span></div>
         {glimpse.tag && <span className="ep-badge">{glimpse.tag}</span>}
       </div>
       <div className="card-body">
