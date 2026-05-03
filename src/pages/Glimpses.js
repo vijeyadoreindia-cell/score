@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { db } from "../firebase/config";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { formatDate } from "../utils/driveUtils";
-import SmartThumbnail from "../components/SmartThumbnail";
-import DriveVideoPlayer from "../components/DriveVideoPlayer";
+import { getDriveThumbnailUrl, getDriveViewUrl, formatDate } from "../utils/driveUtils";
 import "./Glimpses.css";
 
 export default function Glimpses() {
@@ -28,7 +26,7 @@ export default function Glimpses() {
         <section className="page-hero fade-up">
           <div className="hero-badge">🎬 Webinar Glimpses</div>
           <h1>Relive the <span className="highlight">Moments</span></h1>
-          <p>Highlights and recordings from our past webinars, workshops, and special events.</p>
+          <p>Highlights and photos from our past webinars, workshops, and special events.</p>
         </section>
 
         {loading ? (
@@ -43,30 +41,47 @@ export default function Glimpses() {
           </div>
         ) : glimpses.length === 0 ? (
           <div className="empty-state fade-up">
-            <svg width="64" height="64" fill="none" viewBox="0 0 24 24"><path d="M15 10l4.553-2.276A1 1 0 0121 8.724v6.552a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            <p>No glimpses yet. Past webinar recordings will appear here.</p>
+            <svg width="64" height="64" fill="none" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+              <circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M21 15l-5-5L5 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <p>No glimpses yet. Photos from past events will appear here.</p>
           </div>
         ) : (
           <div className="glimpses-grid">
             {glimpses.map((g, i) => (
-              <GlimpseCard key={g.id} glimpse={g} index={i} onPlay={() => setSelected(g)} />
+              <GlimpseCard key={g.id} glimpse={g} index={i} onClick={() => setSelected(g)} />
             ))}
           </div>
         )}
       </div>
 
+      {/* Image lightbox modal */}
       {selected && (
         <div className="modal-backdrop" onClick={() => setSelected(null)}>
-          <div className="video-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="video-modal-header">
+          <div className="glimpse-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="glimpse-modal-header">
               <div>
                 <h3>{selected.title}</h3>
                 {selected.date && <p className="guest-label">📅 {formatDate(selected.date)}</p>}
               </div>
               <button className="modal-close" onClick={() => setSelected(null)}>✕</button>
             </div>
-            <DriveVideoPlayer url={selected.videoUrl} title={selected.title} />
+
+            <div className="glimpse-modal-img">
+              <GlimpseImage imageUrl={selected.imageUrl} alt={selected.title} />
+            </div>
+
             {selected.description && <p className="video-desc">{selected.description}</p>}
+
+            <div className="glimpse-modal-actions">
+              {selected.imageUrl && (
+                <a href={getDriveViewUrl(selected.imageUrl)} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">
+                  🔗 Open full image
+                </a>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -74,24 +89,58 @@ export default function Glimpses() {
   );
 }
 
-function GlimpseCard({ glimpse, index, onPlay }) {
+function GlimpseImage({ imageUrl, alt }) {
+  const [failed, setFailed] = useState(false);
+  const thumbUrl = getDriveThumbnailUrl(imageUrl);
+
+  if (!imageUrl || failed) {
+    return (
+      <div className="glimpse-no-img">
+        <svg width="48" height="48" fill="none" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+          <circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M21 15l-5-5L5 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        <p>Image not available</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="glimpse-card fade-up" style={{ animationDelay: `${index * 0.07}s` }}>
-      <div className="card-thumb glimpse-thumb" onClick={onPlay}>
-        <SmartThumbnail
-          videoUrl={glimpse.videoUrl}
-          customThumbUrl={glimpse.thumbnailUrl}
-          alt={glimpse.title}
-          placeholder={
-            <div className="thumb-placeholder glimpse-placeholder">
-              <svg width="44" height="44" fill="none" viewBox="0 0 24 24"><path d="M15 10l4.553-2.276A1 1 0 0121 8.724v6.552a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.7"/></svg>
-            </div>
-          }
-        />
-        <div className="play-overlay">
-          <div className="play-btn-big">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+    <img
+      src={thumbUrl || imageUrl}
+      alt={alt}
+      className="glimpse-full-img"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+function GlimpseCard({ glimpse, index, onClick }) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const thumbUrl = getDriveThumbnailUrl(glimpse.imageUrl);
+
+  return (
+    <div className="glimpse-card fade-up" style={{ animationDelay: `${index * 0.06}s` }} onClick={onClick}>
+      <div className="glimpse-img-wrap">
+        {thumbUrl && !imgFailed ? (
+          <img
+            src={thumbUrl}
+            alt={glimpse.title}
+            className="glimpse-thumb-img"
+            onError={() => setImgFailed(true)}
+          />
+        ) : (
+          <div className="glimpse-img-placeholder">
+            <svg width="40" height="40" fill="none" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5"/>
+              <circle cx="8.5" cy="8.5" r="1.5" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5"/>
+              <path d="M21 15l-5-5L5 21" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </div>
+        )}
+        <div className="glimpse-hover-overlay">
+          <span>View</span>
         </div>
         {glimpse.tag && <span className="ep-badge">{glimpse.tag}</span>}
       </div>
@@ -99,10 +148,7 @@ function GlimpseCard({ glimpse, index, onPlay }) {
         <h3 className="card-title">{glimpse.title}</h3>
         {glimpse.speaker && <p className="card-guest">👤 {glimpse.speaker}</p>}
         {glimpse.description && <p className="card-desc">{glimpse.description}</p>}
-        <div className="card-footer">
-          {glimpse.date && <span className="card-date">📅 {formatDate(glimpse.date)}</span>}
-        </div>
-        <button className="btn btn-primary btn-sm watch-btn" onClick={onPlay}>▶ Watch</button>
+        {glimpse.date && <span className="card-date">📅 {formatDate(glimpse.date)}</span>}
       </div>
     </div>
   );
