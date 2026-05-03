@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { db } from "../firebase/config";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { getDriveViewUrl, getDriveThumbnailUrl, formatDate } from "../utils/driveUtils";
-import SmartThumbnail from "../components/SmartThumbnail";
 import "./Webinars.css";
 
 export default function Webinars() {
@@ -59,19 +58,14 @@ export default function Webinars() {
         )}
       </div>
 
+      {/* Poster modal */}
       {posterModal && (
         <div className="modal-backdrop" onClick={() => setPosterModal(null)}>
           <div className="poster-modal" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setPosterModal(null)}>✕</button>
             <h3>{posterModal.title}</h3>
             <div className="poster-img-wrap">
-              <SmartThumbnail
-                customThumbUrl={getDriveThumbnailUrl(posterModal.posterUrl)}
-                alt="Event Poster"
-                placeholder={
-                  <div style={{ padding: 40, color: "var(--gray-400)", textAlign: "center" }}>No poster available</div>
-                }
-              />
+              <DriveImage url={posterModal.posterUrl} alt="Event Poster" />
             </div>
             <div className="poster-modal-actions">
               {posterModal.posterUrl && (
@@ -92,17 +86,47 @@ export default function Webinars() {
   );
 }
 
+/* Plain Drive image loader — no canvas, just img tag with Drive thumbnail URL */
+function DriveImage({ url, alt }) {
+  const [failed, setFailed] = useState(false);
+  const thumbUrl = getDriveThumbnailUrl(url);
+
+  if (!url || failed) {
+    return (
+      <div className="poster-fallback" style={{ padding: 40, color: "var(--gray-400)", textAlign: "center" }}>
+        📋 No poster available
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={thumbUrl || url}
+      alt={alt}
+      style={{ width: "100%", display: "block", borderRadius: 8 }}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 function WebinarCard({ webinar, index, onViewPoster }) {
+  const [imgFailed, setImgFailed] = useState(false);
   const isUpcoming = webinar.date && new Date(webinar.date) >= new Date();
-  const posterThumb = getDriveThumbnailUrl(webinar.posterUrl);
+  const thumbUrl = getDriveThumbnailUrl(webinar.posterUrl);
+
   return (
     <div className="webinar-card fade-up" style={{ animationDelay: `${index * 0.1}s` }}>
       <div className="wc-poster" onClick={onViewPoster}>
-        <SmartThumbnail
-          customThumbUrl={posterThumb}
-          alt={webinar.title}
-          placeholder={<div className="poster-fallback"><span>📋</span></div>}
-        />
+        {webinar.posterUrl && !imgFailed ? (
+          <img
+            src={thumbUrl || webinar.posterUrl}
+            alt={webinar.title}
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            onError={() => setImgFailed(true)}
+          />
+        ) : (
+          <div className="poster-fallback"><span>📋</span></div>
+        )}
         <div className="poster-hover">View Poster</div>
       </div>
 
@@ -114,13 +138,11 @@ function WebinarCard({ webinar, index, onViewPoster }) {
         <h2 className="wc-title">{webinar.title}</h2>
         {webinar.speaker && <p className="wc-speaker">👤 {webinar.speaker}</p>}
         {webinar.description && <p className="wc-desc">{webinar.description}</p>}
-
         <div className="wc-meta">
           {webinar.date && <div className="meta-item"><span>📅</span><span>{formatDate(webinar.date)}</span></div>}
           {webinar.time && <div className="meta-item"><span>🕐</span><span>{webinar.time}</span></div>}
           {webinar.platform && <div className="meta-item"><span>💻</span><span>{webinar.platform}</span></div>}
         </div>
-
         <div className="wc-actions">
           <button className="btn btn-ghost btn-sm" onClick={onViewPoster}>View Poster</button>
           {webinar.registrationLink && (
