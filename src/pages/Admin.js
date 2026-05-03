@@ -158,11 +158,6 @@ function PodcastForm({ initial, onSave, onClose }) {
             <input value={form.videoUrl} onChange={set("videoUrl")} placeholder="https://drive.google.com/file/d/..." />
             <p className="form-hint">Paste the Google Drive share link of the video</p>
           </div>
-          <div className="form-group">
-            <label>Custom Thumbnail URL</label>
-            <input value={form.thumbnailUrl} onChange={set("thumbnailUrl")} placeholder="https://drive.google.com/... (optional, auto-generated if empty)" />
-            <p className="form-hint">Leave empty to auto-generate from video</p>
-          </div>
           <div className="form-row">
             <div className="form-group"><label>Episode No.</label><input value={form.episodeNumber} onChange={set("episodeNumber")} placeholder="e.g. 1" type="number" /></div>
             <div className="form-group"><label>Date</label><input value={form.date} onChange={set("date")} type="date" /></div>
