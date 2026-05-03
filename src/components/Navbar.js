@@ -26,11 +26,12 @@ export default function Navbar() {
         setDropdownOpen(false);
       }
     }
+    // Use mousedown so we can check before focus moves away
     document.addEventListener("mousedown", handleOutside);
-    document.addEventListener("touchstart", handleOutside);
+    document.addEventListener("touchend", handleOutside);
     return () => {
       document.removeEventListener("mousedown", handleOutside);
-      document.removeEventListener("touchstart", handleOutside);
+      document.removeEventListener("touchend", handleOutside);
     };
   }, []);
 
@@ -79,10 +80,11 @@ export default function Navbar() {
           <div className="navbar-auth">
             {user ? (
               <div className="user-menu" ref={dropdownRef}>
-                {/* Avatar — tap to toggle dropdown */}
+                {/* Avatar — click to toggle dropdown */}
                 <button
                   className="user-avatar-btn"
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  onMouseDown={(e) => { e.stopPropagation(); setDropdownOpen(v => !v); }}
+                  onTouchEnd={(e) => { e.stopPropagation(); setDropdownOpen(v => !v); }}
                   aria-label="User menu"
                 >
                   {user.photoURL
@@ -93,13 +95,13 @@ export default function Navbar() {
                   }
                 </button>
 
-                {/* Dropdown — shown on click/tap, not hover */}
+                {/* Dropdown — stays open until outside click */}
                 {dropdownOpen && (
-                  <div className="user-dropdown open">
+                  <div className="user-dropdown open" onMouseLeave={() => {}}>
                     <p className="user-name">{user.displayName || "User"}</p>
                     <p className="user-email">{user.email}</p>
                     {isAdmin && <span className="badge-admin">Admin</span>}
-                    <button className="dropdown-btn" onClick={handleLogout}>
+                    <button className="dropdown-btn" onMouseDown={handleLogout}>
                       Sign Out
                     </button>
                   </div>
