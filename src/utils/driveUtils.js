@@ -1,6 +1,5 @@
 /**
  * Robust Google Drive URL utilities
- * Handles all Drive URL formats and browser compatibility
  */
 
 export function extractDriveId(url) {
@@ -10,7 +9,6 @@ export function extractDriveId(url) {
     /[?&]id=([a-zA-Z0-9_-]{10,})/,
     /\/d\/([a-zA-Z0-9_-]{10,})/,
     /open\?id=([a-zA-Z0-9_-]{10,})/,
-    /uc\?.*id=([a-zA-Z0-9_-]{10,})/,
   ];
   for (const p of patterns) {
     const match = url.match(p);
@@ -27,20 +25,11 @@ export function getDriveEmbedUrl(url) {
   return url;
 }
 
-export function getDriveThumbnailUrls(url) {
-  const id = extractDriveId(url);
-  if (!id) return [];
-  return [
-    `https://drive.google.com/thumbnail?id=${id}&sz=w640-h360`,
-    `https://drive.google.com/thumbnail?id=${id}&sz=w400`,
-    `https://lh3.googleusercontent.com/d/${id}=w640-h360`,
-    `https://drive.google.com/uc?export=view&id=${id}`,
-  ];
-}
-
+// For image files (posters) only — NOT for videos
 export function getDriveThumbnailUrl(url) {
-  const urls = getDriveThumbnailUrls(url);
-  return urls[0] || null;
+  const id = extractDriveId(url);
+  if (!id) return null;
+  return `https://drive.google.com/thumbnail?id=${id}&sz=w640`;
 }
 
 export function getDriveViewUrl(url) {
