@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import AuthModal from "./AuthModal";
@@ -10,6 +10,8 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   const navLinks = [
     { path: "/", label: "Podcasts" },
@@ -17,7 +19,23 @@ export default function Navbar() {
     { path: "/glimpses", label: "Webinar Glimpses" },
   ];
 
+  // Close dropdown when clicking/tapping outside
+  useEffect(() => {
+    function handleOutside(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("touchstart", handleOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("touchstart", handleOutside);
+    };
+  }, []);
+
   const handleLogout = async () => {
+    setDropdownOpen(false);
     await logout();
     navigate("/");
   };
@@ -48,7 +66,11 @@ export default function Navbar() {
               </Link>
             ))}
             {isAdmin && (
-              <Link to="/admin" className={`nav-link admin-link ${location.pathname === "/admin" ? "active" : ""}`} onClick={() => setMenuOpen(false)}>
+              <Link
+                to="/admin"
+                className={`nav-link admin-link ${location.pathname === "/admin" ? "active" : ""}`}
+                onClick={() => setMenuOpen(false)}
+              >
                 ⚙ Admin
               </Link>
             )}
@@ -56,17 +78,32 @@ export default function Navbar() {
 
           <div className="navbar-auth">
             {user ? (
-              <div className="user-menu">
-                {user.photoURL
-                  ? <img src={user.photoURL} alt={user.displayName} className="user-avatar" />
-                  : <div className="user-avatar-initials">{(user.displayName || user.email || "U")[0].toUpperCase()}</div>
-                }
-                <div className="user-dropdown">
-                  <p className="user-name">{user.displayName || "User"}</p>
-                  <p className="user-email">{user.email}</p>
-                  {isAdmin && <span className="badge-admin">Admin</span>}
-                  <button className="dropdown-btn" onClick={handleLogout}>Sign Out</button>
-                </div>
+              <div className="user-menu" ref={dropdownRef}>
+                {/* Avatar — tap to toggle dropdown */}
+                <button
+                  className="user-avatar-btn"
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  aria-label="User menu"
+                >
+                  {user.photoURL
+                    ? <img src={user.photoURL} alt={user.displayName} className="user-avatar" />
+                    : <div className="user-avatar-initials">
+                        {(user.displayName || user.email || "U")[0].toUpperCase()}
+                      </div>
+                  }
+                </button>
+
+                {/* Dropdown — shown on click/tap, not hover */}
+                {dropdownOpen && (
+                  <div className="user-dropdown open">
+                    <p className="user-name">{user.displayName || "User"}</p>
+                    <p className="user-email">{user.email}</p>
+                    {isAdmin && <span className="badge-admin">Admin</span>}
+                    <button className="dropdown-btn" onClick={handleLogout}>
+                      Sign Out
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <button className="btn btn-primary btn-sm signin-btn" onClick={() => setShowAuth(true)}>
