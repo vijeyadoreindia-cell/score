@@ -11,6 +11,7 @@ import Podcasts from "./pages/Podcasts";
 import Webinars from "./pages/Webinars";
 import Glimpses from "./pages/Glimpses";
 import Admin from "./pages/Admin";
+import About from "./pages/About";
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
               <Route path="/" element={<Podcasts />} />
               <Route path="/webinars" element={<Webinars />} />
               <Route path="/glimpses" element={<Glimpses />} />
+              <Route path="/about" element={<About />} />
               <Route path="/admin" element={<Admin />} />
             </Routes>
           </div>
