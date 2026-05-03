@@ -17,6 +17,7 @@ export default function Navbar() {
     { path: "/", label: "Podcasts" },
     { path: "/webinars", label: "Upcoming Webinars" },
     { path: "/glimpses", label: "Webinar Glimpses" },
+    { path: "/about", label: "About" },
   ];
 
   // Close dropdown when clicking/tapping outside
