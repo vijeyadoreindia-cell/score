@@ -76,3 +76,6 @@
   .admin-tabs { width: 100%; }
   .tab-btn { flex: 1; }
 }
+
+.password-field { position: relative; }
+.password-field input { padding-right: 44px; width: 100%; }
