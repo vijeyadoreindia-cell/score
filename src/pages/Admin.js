@@ -412,11 +412,13 @@ function GlimpseForm({ initial, onSave, onClose }) {
 
 /* ─── ADMINS MANAGEMENT (Super Admin only) ──────────────────── */
 function AdminsAdmin() {
-  const { user, SUPER_ADMIN } = useAuth();
+  const { user, SUPER_ADMIN, createAdminAccount } = useAuth();
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newEmail, setNewEmail] = useState("");
-  const [newName, setNewName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [showPass, setShowPass] = useState(false);
+  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   useEffect(() => { fetchAdmins(); }, []);
 
@@ -428,19 +430,39 @@ function AdminsAdmin() {
 
   async function addAdmin(e) {
     e.preventDefault();
-    if (!newEmail) { toast.error("Email is required"); return; }
-    const existing = await getDoc(doc(db, "admins", newEmail));
-    if (existing.exists()) { toast.warning("Already an admin"); return; }
-    await setDoc(doc(db, "admins", newEmail), {
-      email: newEmail,
-      name: newName || newEmail,
-      addedBy: user.email,
-      addedAt: new Date().toISOString(),
-      isSuperAdmin: false,
-    });
-    toast.success(`${newEmail} is now an admin`);
-    setNewEmail(""); setNewName("");
-    fetchAdmins();
+    if (!form.email) { toast.error("Email is required"); return; }
+    if (!form.password || form.password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
+
+    const existing = await getDoc(doc(db, "admins", form.email));
+    if (existing.exists()) { toast.warning("This email is already an admin"); return; }
+
+    setSaving(true);
+    try {
+      // Create Firebase Auth account for the new admin
+      await createAdminAccount(form.email, form.password, form.name);
+
+      // Save to Firestore admins collection
+      await setDoc(doc(db, "admins", form.email), {
+        email: form.email,
+        name: form.name || form.email,
+        addedBy: user.email,
+        addedAt: new Date().toISOString(),
+        isSuperAdmin: false,
+      });
+
+      toast.success(`✅ Admin account created for ${form.email}`);
+      setForm({ name: "", email: "", password: "" });
+      fetchAdmins();
+    } catch (err) {
+      const msg = err.code === "auth/email-already-in-use"
+        ? "An account with this email already exists"
+        : err.code === "auth/invalid-email"
+        ? "Invalid email address"
+        : err.message || "Failed to create admin";
+      toast.error(msg);
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function removeAdmin(email) {
@@ -459,24 +481,41 @@ function AdminsAdmin() {
 
       <form className="add-admin-form" onSubmit={addAdmin}>
         <h3>Add New Admin</h3>
+        <p className="form-hint" style={{ marginBottom: 14 }}>
+          Creates a login account with the email and password you set. The admin signs in using email + password — no Google required.
+        </p>
         <div className="form-row">
           <div className="form-group">
-            <label>Name</label>
-            <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Admin name" />
+            <label>Full Name</label>
+            <input value={form.name} onChange={set("name")} placeholder="Admin name" />
           </div>
           <div className="form-group">
             <label>Email *</label>
-            <input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="admin@example.com" type="email" />
-          </div>
-          <div className="form-group" style={{ alignSelf: "flex-end" }}>
-            <button type="submit" className="btn btn-primary btn-full">Add Admin</button>
+            <input value={form.email} onChange={set("email")} placeholder="admin@example.com" type="email" required />
           </div>
         </div>
-        <p className="form-hint">The person must sign in with this Google account to access admin features.</p>
+        <div className="form-group" style={{ maxWidth: 340 }}>
+          <label>Password * <span style={{ fontWeight: 400, color: "var(--gray-400)" }}>(min. 6 characters)</span></label>
+          <div className="password-field">
+            <input
+              value={form.password}
+              onChange={set("password")}
+              type={showPass ? "text" : "password"}
+              placeholder="Set a password for this admin"
+              required
+            />
+            <button type="button" className="pass-toggle" onClick={() => setShowPass(!showPass)} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: "1rem" }}>
+              {showPass ? "🙈" : "👁"}
+            </button>
+          </div>
+        </div>
+        <button type="submit" className="btn btn-primary" disabled={saving} style={{ marginTop: 4 }}>
+          {saving ? "Creating..." : "Create Admin Account"}
+        </button>
       </form>
 
       {loading ? <p className="loading-text">Loading...</p> : (
-        <div className="admin-table-wrap">
+        <div className="admin-table-wrap" style={{ marginTop: 24 }}>
           <table className="admin-table">
             <thead><tr><th>Name</th><th>Email</th><th>Added</th><th>Role</th><th>Actions</th></tr></thead>
             <tbody>
