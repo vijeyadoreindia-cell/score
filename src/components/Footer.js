@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import "./Footer.css";
 
 export default function Footer() {
@@ -11,6 +12,15 @@ export default function Footer() {
           <img src="/score.png" alt="SCORE" className="footer-logo-score" />
           <p>Motivating youth for positive action</p>
         </div>
+
+        <div className="footer-links">
+          <Link to="/about">About</Link>
+          <a href="https://adoreglobal.org" target="_blank" rel="noreferrer">Website</a>
+          <a href="https://whatsapp.com/channel/0029VbBcAIvCnA7p0yImIK1F" target="_blank" rel="noreferrer">
+            WhatsApp Channel
+          </a>
+        </div>
+
         <div className="footer-copy">
           <p>© {new Date().getFullYear()} ADORE. All rights reserved.</p>
         </div>
