@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { db } from "../firebase/config";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { getDriveViewUrl, formatDate, extractDriveId } from "../utils/driveUtils";
+import { getDriveViewUrl, getDriveThumbnailUrl, formatDate } from "../utils/driveUtils";
 import SmartThumbnail from "../components/SmartThumbnail";
 import "./Webinars.css";
 
@@ -66,7 +66,7 @@ export default function Webinars() {
             <h3>{posterModal.title}</h3>
             <div className="poster-img-wrap">
               <SmartThumbnail
-                videoUrl={posterModal.posterUrl}
+                customThumbUrl={getDriveThumbnailUrl(posterModal.posterUrl)}
                 alt="Event Poster"
                 placeholder={
                   <div style={{ padding: 40, color: "var(--gray-400)", textAlign: "center" }}>No poster available</div>
@@ -94,11 +94,12 @@ export default function Webinars() {
 
 function WebinarCard({ webinar, index, onViewPoster }) {
   const isUpcoming = webinar.date && new Date(webinar.date) >= new Date();
+  const posterThumb = getDriveThumbnailUrl(webinar.posterUrl);
   return (
     <div className="webinar-card fade-up" style={{ animationDelay: `${index * 0.1}s` }}>
       <div className="wc-poster" onClick={onViewPoster}>
         <SmartThumbnail
-          videoUrl={webinar.posterUrl}
+          customThumbUrl={posterThumb}
           alt={webinar.title}
           placeholder={<div className="poster-fallback"><span>📋</span></div>}
         />
