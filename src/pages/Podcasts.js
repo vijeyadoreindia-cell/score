@@ -79,9 +79,10 @@ function PodcastCard({ podcast, index, onPlay }) {
     <div className="podcast-card fade-up" style={{ animationDelay: `${index * 0.07}s` }}>
       <div className="card-thumb" onClick={onPlay}>
         <SmartThumbnail
-          videoUrl={podcast.videoUrl}
-          customThumbUrl={podcast.thumbnailUrl}
-          alt={podcast.title}
+          key={podcast.title + podcast.guestName}
+          title={podcast.title}
+          speaker={podcast.guestName}
+          episodeNumber={podcast.episodeNumber}
         />
         <div className="play-overlay">
           <div className="play-btn-big">
